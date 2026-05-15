@@ -67,6 +67,7 @@ class TelegramBot:
             ("daily_limit", self._cmd_daily_limit),
             ("paper", self._cmd_paper),
             ("confirm_live", self._cmd_confirm_live),
+            ("help", self._cmd_help),
         ]
         for name, handler in handlers:
             self._app.add_handler(CommandHandler(name, handler))
@@ -149,6 +150,27 @@ class TelegramBot:
         await self.send(text)
 
     # ── Commands ────────────────────────────────────────────────────────────
+
+    async def _cmd_help(self, update, context) -> None:
+        text = (
+            "SETHTRADEZ — Commands\n\n"
+            "/status — current position + daily P&L\n"
+            "/daily — today's trade summary\n"
+            "/pause — pause trading\n"
+            "/resume — resume trading\n"
+            "/close — emergency close open position\n\n"
+            "Settings:\n"
+            "/stake [amount] — USDC per trade\n"
+            "/stop [amount] — initial stop loss ($)\n"
+            "/trail [amount] — trailing stop distance ($)\n"
+            "/move [amount] — min candle move to signal ($)\n"
+            "/daily_limit [amount] — daily loss limit ($)\n\n"
+            "Mode:\n"
+            "/paper on — enable paper mode\n"
+            "/paper off — disable paper mode (prompts confirm)\n"
+            "/confirm_live — confirm switch to live trading"
+        )
+        await update.message.reply_text(text)
 
     async def _cmd_status(self, update, context) -> None:
         rm = self._risk_manager
