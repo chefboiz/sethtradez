@@ -3,6 +3,7 @@ Telegram bot for SethTradez — commands and proactive trade alerts.
 Uses python-telegram-bot v20 (async). Separate bot from SethBetz.
 """
 
+import asyncio
 import time
 from datetime import datetime, timezone
 from typing import Optional, TYPE_CHECKING
@@ -35,6 +36,7 @@ class TelegramBot:
         self._db = db
         self._app = None
         self._pending_live_confirm = False
+        self._stop_event: Optional[asyncio.Event] = None
 
     def setup(self) -> bool:
         if not config.TELEGRAM_TOKEN:
@@ -70,17 +72,22 @@ class TelegramBot:
             self._app.add_handler(CommandHandler(name, handler))
 
     async def start(self) -> None:
-        if self._app:
-            await self._app.initialize()
-            await self._app.start()
-            await self._app.updater.start_polling()
-            logger.info("Telegram bot polling started")
+        if not self._app:
+            return
+        self._stop_event = asyncio.Event()
+        await self._app.initialize()
+        await self._app.start()
+        await self._app.updater.start_polling(drop_pending_updates=True)
+        logger.info("Telegram bot polling started")
+        await self._stop_event.wait()  # keep task alive so PTB's internal tasks run
 
     async def stop(self) -> None:
         if self._app:
             await self._app.updater.stop()
             await self._app.stop()
             await self._app.shutdown()
+        if self._stop_event:
+            self._stop_event.set()
 
     async def send(self, text: str) -> None:
         if not self._app or not config.TELEGRAM_CHAT_ID:
