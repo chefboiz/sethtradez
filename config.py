@@ -32,9 +32,8 @@ HL_TESTNET: bool = _bool("HL_TESTNET", True)
 TELEGRAM_TOKEN: str = os.getenv("TELEGRAM_TOKEN_HYPERBETZ", "")
 TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID_HYPERBETZ", "")
 
-# Supabase
-SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY: str = os.getenv("SUPABASE_KEY", "")
+# Database (shared Railway PostgreSQL with SethBetz)
+DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 
 # Trading parameters
 STAKE_USDC: float = _float("STAKE_USDC", 10.0)
