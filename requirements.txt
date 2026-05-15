@@ -1,0 +1,6 @@
+hyperliquid-python-sdk
+python-telegram-bot==20.7
+supabase
+python-dotenv
+websocket-client
+aiohttp
