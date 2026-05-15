@@ -2,5 +2,5 @@ hyperliquid-python-sdk
 python-telegram-bot==20.7
 asyncpg
 python-dotenv
-websocket-client
+websockets
 aiohttp
