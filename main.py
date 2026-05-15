@@ -90,6 +90,10 @@ async def main() -> None:
         if position_manager.open_position is not None:
             logger.info("Signal skipped — position already open")
             return
+        if config.FADE_MODE:
+            original = sig["direction"]
+            sig = {**sig, "direction": "SHORT" if original == "LONG" else "LONG", "faded_from": original}
+            logger.signal(f"FADE MODE — signal was {original}, trading {sig['direction']}")
         asyncio.get_event_loop().create_task(position_manager.enter_position(sig))
 
     signal_engine = SignalEngine(on_signal=_on_signal, testnet=config.HL_TESTNET)

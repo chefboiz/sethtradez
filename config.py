@@ -45,3 +45,4 @@ DAILY_LOSS_LIMIT_USD: float = _float("DAILY_LOSS_LIMIT_USD", 50.0)
 
 # Modes
 PAPER_MODE: bool = _bool("PAPER_MODE", True)
+FADE_MODE: bool = _bool("FADE_MODE", False)

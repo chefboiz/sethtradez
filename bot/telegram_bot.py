@@ -67,6 +67,7 @@ class TelegramBot:
             ("daily_limit", self._cmd_daily_limit),
             ("paper", self._cmd_paper),
             ("confirm_live", self._cmd_confirm_live),
+            ("fade", self._cmd_fade),
             ("help", self._cmd_help),
         ]
         for name, handler in handlers:
@@ -102,9 +103,11 @@ class TelegramBot:
         mode = "[PAPER]" if config.PAPER_MODE else "[LIVE]"
         direction = pos["direction"]
         arrow = "↑" if direction == "LONG" else "↓"
-        emoji = "🟢"
+        faded_from = signal.get("faded_from")
+        fade_line = f"🔄 FADE MODE — Signal: {faded_from} → Trading: {direction}\n" if faded_from else ""
         text = (
-            f"{emoji} SETHTRADEZ ENTRY {mode}\n\n"
+            f"🟢 SETHTRADEZ ENTRY {mode}\n\n"
+            f"{fade_line}"
             f"📈 {direction} BTC\n"
             f"💵 Entry: ${pos['entry_price']:,.2f}\n"
             f"📊 Move at signal: ${signal.get('move_usd', 0):.0f} {arrow}\n"
@@ -168,7 +171,9 @@ class TelegramBot:
             "Mode:\n"
             "/paper on — enable paper mode\n"
             "/paper off — disable paper mode (prompts confirm)\n"
-            "/confirm_live — confirm switch to live trading"
+            "/confirm_live — confirm switch to live trading\n"
+            "/fade on — fade signals (trade the reversal)\n"
+            "/fade off — trade in signal direction (default)"
         )
         await update.message.reply_text(text)
 
@@ -198,10 +203,12 @@ class TelegramBot:
         else:
             pos_text = "\n📭 No open position"
 
+        fade_str = "ON 🔄" if config.FADE_MODE else "OFF"
         text = (
             "📊 SETHTRADEZ STATUS\n\n"
             f"🔄 Mode: {mode}\n"
-            f"⏸️ Trading: {trading}"
+            f"⏸️ Trading: {trading}\n"
+            f"🔄 Fade Mode: {fade_str}"
             f"{pos_text}\n\n"
             f"💰 Today's P&L: ${daily_pnl:+.2f}\n"
             f"⚙️ Settings:\n"
@@ -333,3 +340,24 @@ class TelegramBot:
         await update.message.reply_text(
             "🚨 LIVE TRADING ACTIVE\nReal orders will be placed on Hyperliquid.\nUse /paper on to return to paper mode."
         )
+
+    async def _cmd_fade(self, update, context) -> None:
+        try:
+            arg = context.args[0].lower()
+        except IndexError:
+            status = "ON" if config.FADE_MODE else "OFF"
+            await update.message.reply_text(f"🔄 Fade Mode is currently {status}.\nUsage: /fade on | /fade off")
+            return
+
+        if arg == "on":
+            config.FADE_MODE = True
+            await update.message.reply_text(
+                "🔄 FADE MODE ON\n"
+                "LONG signals will trade SHORT.\n"
+                "SHORT signals will trade LONG."
+            )
+        elif arg == "off":
+            config.FADE_MODE = False
+            await update.message.reply_text("🔄 FADE MODE OFF\nTrading in signal direction (normal mode).")
+        else:
+            await update.message.reply_text("Usage: /fade on | /fade off")
