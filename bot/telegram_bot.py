@@ -61,7 +61,9 @@ class TelegramBot:
             ("stake", self._cmd_stake),
             ("stop", self._cmd_stop),
             ("trail", self._cmd_trail),
+            ("trail_activate", self._cmd_trail_activate),
             ("move", self._cmd_move),
+            ("maxmove", self._cmd_maxmove),
             ("close", self._cmd_close),
             ("daily", self._cmd_daily),
             ("daily_limit", self._cmd_daily_limit),
@@ -114,7 +116,7 @@ class TelegramBot:
             f"🕐 Candle open: ${signal.get('candle_open_price', 0):,.2f}\n"
             f"💰 Stake: ${pos['stake_usdc']:.0f} USDC\n"
             f"🛑 Stop loss: ${pos['initial_stop']:,.2f}\n\n"
-            f"Trailing stop activates at +${config.TRAIL_ACTIVATE_USD:.0f} profit"
+            f"Trailing stop activates at +${config.TRAIL_ACTIVATE_USD:.0f} price move from entry"
         )
         await self.send(text)
 
@@ -166,7 +168,9 @@ class TelegramBot:
             "/stake [amount] — USDC per trade\n"
             "/stop [amount] — initial stop loss ($)\n"
             "/trail [amount] — trailing stop distance ($)\n"
+            "/trail_activate [amount] — price move from entry to activate trail ($)\n"
             "/move [amount] — min candle move to signal ($)\n"
+            "/maxmove [amount] — max candle move before skipping signal ($)\n"
             "/daily_limit [amount] — daily loss limit ($)\n\n"
             "Mode:\n"
             "/paper on — enable paper mode\n"
@@ -189,7 +193,10 @@ class TelegramBot:
             current_price = pos["entry_price"]
             direction = pos["direction"]
             pnl = (current_price - pos["entry_price"]) * pos["qty"] if direction == "LONG" else (pos["entry_price"] - current_price) * pos["qty"]
-            elapsed = _fmt_hold(time.time() - pos["entry_time"])
+            elapsed_secs = time.time() - pos["entry_time"]
+            elapsed = _fmt_hold(elapsed_secs)
+            remaining_secs = max(0.0, 1200 - elapsed_secs)
+            remaining = _fmt_hold(remaining_secs)
             trail_str = f"${pos['trailing_stop_level']:,.2f} (active)" if pos["trailing_active"] and pos["trailing_stop_level"] else "not active"
             pos_text = (
                 f"\n📈 Open Position: {direction} BTC\n"
@@ -198,7 +205,8 @@ class TelegramBot:
                 f"  P&L: ${pnl:+.2f}\n"
                 f"  Stop: ${pos['initial_stop']:,.2f} (hard)\n"
                 f"  Trail: {trail_str}\n"
-                f"  Time in trade: {elapsed}"
+                f"  Time in trade: {elapsed}\n"
+                f"  Time remaining: {remaining}"
             )
         else:
             pos_text = "\n📭 No open position"
@@ -213,9 +221,9 @@ class TelegramBot:
             f"💰 Today's P&L: ${daily_pnl:+.2f}\n"
             f"⚙️ Settings:\n"
             f"  Stake: ${config.STAKE_USDC:.0f} USDC\n"
-            f"  Min move: ${config.MIN_CANDLE_MOVE_USD:.0f}\n"
+            f"  Min move: ${config.MIN_CANDLE_MOVE_USD:.0f} / Max: ${config.MAX_CANDLE_MOVE_USD:.0f}\n"
             f"  Init stop: ${config.INITIAL_STOP_USD:.0f}\n"
-            f"  Trail dist: ${config.TRAIL_DISTANCE_USD:.0f}\n"
+            f"  Trail dist: ${config.TRAIL_DISTANCE_USD:.0f} | Activate: ${config.TRAIL_ACTIVATE_USD:.0f}\n"
             f"  Daily limit: ${config.DAILY_LOSS_LIMIT_USD:.0f}"
         )
         await update.message.reply_text(text)
@@ -254,6 +262,14 @@ class TelegramBot:
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /trail [amount]")
 
+    async def _cmd_trail_activate(self, update, context) -> None:
+        try:
+            amount = float(context.args[0])
+            config.TRAIL_ACTIVATE_USD = amount
+            await update.message.reply_text(f"✅ Trail activation threshold updated to ${amount} price move from entry")
+        except (IndexError, ValueError):
+            await update.message.reply_text("Usage: /trail_activate [amount]")
+
     async def _cmd_move(self, update, context) -> None:
         try:
             amount = float(context.args[0])
@@ -261,6 +277,14 @@ class TelegramBot:
             await update.message.reply_text(f"✅ Minimum candle move updated to ${amount}")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /move [amount]")
+
+    async def _cmd_maxmove(self, update, context) -> None:
+        try:
+            amount = float(context.args[0])
+            config.MAX_CANDLE_MOVE_USD = amount
+            await update.message.reply_text(f"✅ Max candle move updated to ${amount} (signals above this are skipped)")
+        except (IndexError, ValueError):
+            await update.message.reply_text("Usage: /maxmove [amount]")
 
     async def _cmd_close(self, update, context) -> None:
         pm = self._position_manager

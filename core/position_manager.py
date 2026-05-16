@@ -39,7 +39,7 @@ class PositionManager:
     - Entry via market order
     - Hard stop loss monitoring
     - Trailing stop activation and management
-    - Time-based forced exit (10 min max)
+    - Time-based forced exit (20 min max)
     - Paper mode support (log only, no real orders)
     """
 
@@ -152,18 +152,16 @@ class PositionManager:
                 await self.close_position("STOP_LOSS", current_price)
                 return
 
-            # Trailing stop activation
+            # Trailing stop activation (price movement from entry, not PnL)
             if direction == "LONG":
-                pnl_usd = (current_price - entry_price) * qty
-                if not pos["trailing_active"] and pnl_usd >= config.TRAIL_ACTIVATE_USD:
+                if not pos["trailing_active"] and (current_price - entry_price) >= config.TRAIL_ACTIVATE_USD:
                     pos["trailing_active"] = True
                     pos["highest_price"] = current_price
                     pos["trailing_stop_level"] = current_price - config.TRAIL_DISTANCE_USD
                     logger.info(f"Trail activated at ${current_price:,.2f}, stop=${pos['trailing_stop_level']:,.2f}")
 
             if direction == "SHORT":
-                pnl_usd = (entry_price - current_price) * qty
-                if not pos["trailing_active"] and pnl_usd >= config.TRAIL_ACTIVATE_USD:
+                if not pos["trailing_active"] and (entry_price - current_price) >= config.TRAIL_ACTIVATE_USD:
                     pos["trailing_active"] = True
                     pos["lowest_price"] = current_price
                     pos["trailing_stop_level"] = current_price + config.TRAIL_DISTANCE_USD
@@ -187,8 +185,8 @@ class PositionManager:
                     await self.close_position("TRAILING_STOP", current_price)
                     return
 
-            # Time stop (10 minutes)
-            if elapsed >= 600:
+            # Time stop (20 minutes)
+            if elapsed >= 1200:
                 await self.close_position("TIME_STOP", current_price)
                 return
 

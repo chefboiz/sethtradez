@@ -39,10 +39,11 @@ DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 STAKE_USDC: float = _float("STAKE_USDC", 10.0)
 INITIAL_STOP_USD: float = _float("INITIAL_STOP_USD", 5.0)
 TRAIL_DISTANCE_USD: float = _float("TRAIL_DISTANCE_USD", 10.0)
-TRAIL_ACTIVATE_USD: float = _float("TRAIL_ACTIVATE_USD", 5.0)
+TRAIL_ACTIVATE_USD: float = _float("TRAIL_ACTIVATE_USD", 15.0)
 MIN_CANDLE_MOVE_USD: float = _float("MIN_CANDLE_MOVE_USD", 40.0)
+MAX_CANDLE_MOVE_USD: float = _float("MAX_CANDLE_MOVE_USD", 300.0)
 DAILY_LOSS_LIMIT_USD: float = _float("DAILY_LOSS_LIMIT_USD", 50.0)
 
 # Modes
 PAPER_MODE: bool = _bool("PAPER_MODE", True)
-FADE_MODE: bool = _bool("FADE_MODE", False)
+FADE_MODE: bool = _bool("FADE_MODE", True)

@@ -82,6 +82,10 @@ class SignalEngine:
             logger.info(f"No signal — move was ${move:+.2f} (threshold ±${min_move})")
             return
 
+        if abs(move) > config.MAX_CANDLE_MOVE_USD:
+            logger.info(f"Signal skipped — move ${abs(move):.2f} exceeds MAX_CANDLE_MOVE ${config.MAX_CANDLE_MOVE_USD} (liquidation event)")
+            return
+
         sig = {
             "direction": direction,
             "coin": "BTC",
