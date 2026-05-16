@@ -67,6 +67,7 @@ class TelegramBot:
             ("close", self._cmd_close),
             ("daily", self._cmd_daily),
             ("daily_limit", self._cmd_daily_limit),
+            ("timestop", self._cmd_timestop),
             ("paper", self._cmd_paper),
             ("confirm_live", self._cmd_confirm_live),
             ("fade", self._cmd_fade),
@@ -171,7 +172,8 @@ class TelegramBot:
             "/trail_activate [amount] — price move from entry to activate trail ($)\n"
             "/move [amount] — min candle move to signal ($)\n"
             "/maxmove [amount] — max candle move before skipping signal ($)\n"
-            "/daily_limit [amount] — daily loss limit ($)\n\n"
+            "/daily_limit [amount] — daily loss limit ($)\n"
+            "/timestop [minutes] — max time in trade before forced exit\n\n"
             "Mode:\n"
             "/paper on — enable paper mode\n"
             "/paper off — disable paper mode (prompts confirm)\n"
@@ -195,7 +197,7 @@ class TelegramBot:
             pnl = (current_price - pos["entry_price"]) * pos["qty"] if direction == "LONG" else (pos["entry_price"] - current_price) * pos["qty"]
             elapsed_secs = time.time() - pos["entry_time"]
             elapsed = _fmt_hold(elapsed_secs)
-            remaining_secs = max(0.0, 1200 - elapsed_secs)
+            remaining_secs = max(0.0, config.TIME_STOP_SECS - elapsed_secs)
             remaining = _fmt_hold(remaining_secs)
             trail_str = f"${pos['trailing_stop_level']:,.2f} (active)" if pos["trailing_active"] and pos["trailing_stop_level"] else "not active"
             pos_text = (
@@ -224,6 +226,7 @@ class TelegramBot:
             f"  Min move: ${config.MIN_CANDLE_MOVE_USD:.0f} / Max: ${config.MAX_CANDLE_MOVE_USD:.0f}\n"
             f"  Init stop: ${config.INITIAL_STOP_USD:.0f}\n"
             f"  Trail dist: ${config.TRAIL_DISTANCE_USD:.0f} | Activate: ${config.TRAIL_ACTIVATE_USD:.0f}\n"
+            f"  Time stop: {config.TIME_STOP_SECS // 60} mins\n"
             f"  Daily limit: ${config.DAILY_LOSS_LIMIT_USD:.0f}"
         )
         await update.message.reply_text(text)
@@ -335,6 +338,15 @@ class TelegramBot:
             await update.message.reply_text(f"✅ Daily loss limit set to ${amount}")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /daily_limit [amount]")
+
+    async def _cmd_timestop(self, update, context) -> None:
+        try:
+            minutes = float(context.args[0])
+            config.TIME_STOP_SECS = int(minutes * 60)
+            config.save_runtime_config()
+            await update.message.reply_text(f"✅ Time stop updated to {minutes:.0f} mins")
+        except (IndexError, ValueError):
+            await update.message.reply_text("Usage: /timestop [minutes]")
 
     async def _cmd_paper(self, update, context) -> None:
         try:
