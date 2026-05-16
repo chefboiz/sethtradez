@@ -39,7 +39,7 @@ class PositionManager:
     - Entry via market order
     - Hard stop loss monitoring
     - Trailing stop activation and management
-    - Time-based forced exit (20 min max)
+    - Time-based forced exit (TIME_STOP_SECS, default 20 min)
     - Paper mode support (log only, no real orders)
     """
 
@@ -185,8 +185,8 @@ class PositionManager:
                     await self.close_position("TRAILING_STOP", current_price)
                     return
 
-            # Time stop (20 minutes)
-            if elapsed >= 1200:
+            # Time stop
+            if elapsed >= config.TIME_STOP_SECS:
                 await self.close_position("TIME_STOP", current_price)
                 return
 

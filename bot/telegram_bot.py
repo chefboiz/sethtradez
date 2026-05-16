@@ -242,6 +242,7 @@ class TelegramBot:
         try:
             amount = float(context.args[0])
             config.STAKE_USDC = amount
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Stake updated to ${amount} USDC")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /stake [amount]")
@@ -250,6 +251,7 @@ class TelegramBot:
         try:
             amount = float(context.args[0])
             config.INITIAL_STOP_USD = amount
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Initial stop updated to ${amount}")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /stop [amount]")
@@ -258,6 +260,7 @@ class TelegramBot:
         try:
             amount = float(context.args[0])
             config.TRAIL_DISTANCE_USD = amount
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Trailing distance updated to ${amount}")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /trail [amount]")
@@ -266,6 +269,7 @@ class TelegramBot:
         try:
             amount = float(context.args[0])
             config.TRAIL_ACTIVATE_USD = amount
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Trail activation threshold updated to ${amount} price move from entry")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /trail_activate [amount]")
@@ -274,6 +278,7 @@ class TelegramBot:
         try:
             amount = float(context.args[0])
             config.MIN_CANDLE_MOVE_USD = amount
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Minimum candle move updated to ${amount}")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /move [amount]")
@@ -282,6 +287,7 @@ class TelegramBot:
         try:
             amount = float(context.args[0])
             config.MAX_CANDLE_MOVE_USD = amount
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Max candle move updated to ${amount} (signals above this are skipped)")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /maxmove [amount]")
@@ -325,6 +331,7 @@ class TelegramBot:
             config.DAILY_LOSS_LIMIT_USD = amount
             if self._risk_manager:
                 self._risk_manager.set_daily_limit(amount)
+            config.save_runtime_config()
             await update.message.reply_text(f"✅ Daily loss limit set to ${amount}")
         except (IndexError, ValueError):
             await update.message.reply_text("Usage: /daily_limit [amount]")
@@ -340,6 +347,7 @@ class TelegramBot:
             config.PAPER_MODE = True
             if self._risk_manager:
                 self._risk_manager.toggle_paper(True)
+            config.save_runtime_config()
             await update.message.reply_text(
                 "🧻 PAPER MODE ON\nAll trades will be logged but NOT executed.\nUse /paper off to go live."
             )
@@ -361,6 +369,7 @@ class TelegramBot:
         config.PAPER_MODE = False
         if self._risk_manager:
             self._risk_manager.toggle_paper(False)
+        config.save_runtime_config()
         await update.message.reply_text(
             "🚨 LIVE TRADING ACTIVE\nReal orders will be placed on Hyperliquid.\nUse /paper on to return to paper mode."
         )
@@ -375,6 +384,7 @@ class TelegramBot:
 
         if arg == "on":
             config.FADE_MODE = True
+            config.save_runtime_config()
             await update.message.reply_text(
                 "🔄 FADE MODE ON\n"
                 "LONG signals will trade SHORT.\n"
@@ -382,6 +392,7 @@ class TelegramBot:
             )
         elif arg == "off":
             config.FADE_MODE = False
+            config.save_runtime_config()
             await update.message.reply_text("🔄 FADE MODE OFF\nTrading in signal direction (normal mode).")
         else:
             await update.message.reply_text("Usage: /fade on | /fade off")
