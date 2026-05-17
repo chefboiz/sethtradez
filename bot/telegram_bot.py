@@ -71,6 +71,7 @@ class TelegramBot:
             ("paper", self._cmd_paper),
             ("confirm_live", self._cmd_confirm_live),
             ("fade", self._cmd_fade),
+            ("direction", self._cmd_direction),
             ("help", self._cmd_help),
         ]
         for name, handler in handlers:
@@ -179,7 +180,8 @@ class TelegramBot:
             "/paper off — disable paper mode (prompts confirm)\n"
             "/confirm_live — confirm switch to live trading\n"
             "/fade on — fade signals (trade the reversal)\n"
-            "/fade off — trade in signal direction (default)"
+            "/fade off — trade in signal direction (default)\n"
+            "/direction both | long_only | short_only — filter trade direction"
         )
         await update.message.reply_text(text)
 
@@ -214,11 +216,14 @@ class TelegramBot:
             pos_text = "\n📭 No open position"
 
         fade_str = "ON 🔄" if config.FADE_MODE else "OFF"
+        _dir_labels = {"both": "BOTH", "long_only": "LONG ONLY", "short_only": "SHORT ONLY"}
+        dir_str = _dir_labels.get(config.DIRECTION_FILTER, config.DIRECTION_FILTER.upper())
         text = (
             "📊 SETHTRADEZ STATUS\n\n"
             f"🔄 Mode: {mode}\n"
             f"⏸️ Trading: {trading}\n"
-            f"🔄 Fade Mode: {fade_str}"
+            f"🔄 Fade Mode: {fade_str}\n"
+            f"🧭 Direction: {dir_str}"
             f"{pos_text}\n\n"
             f"💰 Today's P&L: ${daily_pnl:+.2f}\n"
             f"⚙️ Settings:\n"
@@ -385,6 +390,26 @@ class TelegramBot:
         await update.message.reply_text(
             "🚨 LIVE TRADING ACTIVE\nReal orders will be placed on Hyperliquid.\nUse /paper on to return to paper mode."
         )
+
+    async def _cmd_direction(self, update, context) -> None:
+        _labels = {"both": "BOTH", "long_only": "LONG ONLY", "short_only": "SHORT ONLY"}
+        try:
+            arg = context.args[0].lower()
+        except IndexError:
+            current = _labels.get(config.DIRECTION_FILTER, config.DIRECTION_FILTER.upper())
+            await update.message.reply_text(
+                f"🧭 Direction filter is currently: {current}\n"
+                "Usage: /direction both | long_only | short_only"
+            )
+            return
+
+        if arg not in _labels:
+            await update.message.reply_text("Usage: /direction both | long_only | short_only")
+            return
+
+        config.DIRECTION_FILTER = arg
+        config.save_runtime_config()
+        await update.message.reply_text(f"✅ Direction filter set to: {_labels[arg]}")
 
     async def _cmd_fade(self, update, context) -> None:
         try:

@@ -94,6 +94,15 @@ async def main() -> None:
             original = sig["direction"]
             sig = {**sig, "direction": "SHORT" if original == "LONG" else "LONG", "faded_from": original}
             logger.signal(f"FADE MODE — signal was {original}, trading {sig['direction']}")
+        # Direction filter applied after fade so it acts on the actual trade direction
+        trade_dir = sig["direction"]
+        df = config.DIRECTION_FILTER
+        if df == "long_only" and trade_dir == "SHORT":
+            logger.info("Signal skipped — direction filter: LONG ONLY")
+            return
+        if df == "short_only" and trade_dir == "LONG":
+            logger.info("Signal skipped — direction filter: SHORT ONLY")
+            return
         asyncio.get_event_loop().create_task(position_manager.enter_position(sig))
 
     signal_engine = SignalEngine(on_signal=_on_signal, testnet=config.HL_TESTNET)

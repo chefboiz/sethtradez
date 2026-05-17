@@ -42,8 +42,8 @@ DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 # Trading parameters — overrideable at runtime via Telegram commands
 STAKE_USDC: float = _float("STAKE_USDC", 10.0)
 INITIAL_STOP_USD: float = _float("INITIAL_STOP_USD", 5.0)
-TRAIL_DISTANCE_USD: float = _float("TRAIL_DISTANCE_USD", 10.0)
-TRAIL_ACTIVATE_USD: float = _float("TRAIL_ACTIVATE_USD", 15.0)
+TRAIL_DISTANCE_USD: float = _float("TRAIL_DISTANCE_USD", 25.0)
+TRAIL_ACTIVATE_USD: float = _float("TRAIL_ACTIVATE_USD", 10.0)
 MIN_CANDLE_MOVE_USD: float = _float("MIN_CANDLE_MOVE_USD", 40.0)
 MAX_CANDLE_MOVE_USD: float = _float("MAX_CANDLE_MOVE_USD", 300.0)
 DAILY_LOSS_LIMIT_USD: float = _float("DAILY_LOSS_LIMIT_USD", 50.0)
@@ -52,6 +52,7 @@ TIME_STOP_SECS: int = int(os.getenv("TIME_STOP_SECS", "1200"))
 # Modes
 PAPER_MODE: bool = _bool("PAPER_MODE", True)
 FADE_MODE: bool = _bool("FADE_MODE", True)
+DIRECTION_FILTER: str = os.getenv("DIRECTION_FILTER", "both")  # both | long_only | short_only
 
 # Keys persisted to runtime_config.json with their types
 _PERSIST_KEYS: dict = {
@@ -65,6 +66,7 @@ _PERSIST_KEYS: dict = {
     "TIME_STOP_SECS": int,
     "PAPER_MODE": bool,
     "FADE_MODE": bool,
+    "DIRECTION_FILTER": str,
 }
 
 
